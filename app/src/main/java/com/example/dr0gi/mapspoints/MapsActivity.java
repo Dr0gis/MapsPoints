@@ -26,8 +26,9 @@ import java.util.Locale;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    private LocationManager locationManager;
-    MyLocationListener locationListener;
+    //private LocationManager locationManager;
+    //MyLocationListener locationListener;
+    private FusedLocationProviderClient mFusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,13 +39,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        MyApplication application = (MyApplication) getApplication();
+        //MyApplication application = (MyApplication) getApplication();
 
-        locationManager = application.getLocationManager();
-        locationListener = application.getLocationListener();
+        //locationManager = application.getLocationManager();
+        //locationListener = application.getLocationListener();
+
+        //LocationServices;
     }
 
-    @Override
+    /*@Override
     protected void onResume() {
         super.onResume();
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -59,15 +62,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000 * 10, 10, locationListener);
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000 * 10, 10, locationListener);
-    }
+    }*/
 
-    @Override
+    /*@Override
     protected void onPause() {
         super.onPause();
         locationManager.removeUpdates(locationListener);
-    }
+    }*/
 
-    private void showLocation(Location location) {
+    /*private void showLocation(Location location) {
         if (location == null)
             return;
         if (location.getProvider().equals(LocationManager.GPS_PROVIDER)) {
@@ -80,7 +83,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (location == null)
             return "";
         return String.format(Locale.US, "Coordinates: lat = %1$.4f, lon = %2$.4f, time = %3$tF %3$tT", location.getLatitude(), location.getLongitude(), new Date(location.getTime()));
-    }
+    }*/
 
     /**
      * Manipulates the map once available.
@@ -96,10 +99,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        Location location = locationListener.getLocation();
-        LatLng pointLocation = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.addMarker(new MarkerOptions().position(pointLocation).title("My location"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(pointLocation));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
+        //Location location = locationListener.getLocation();
+        //LatLng pointLocation = new LatLng(location.getLatitude(), location.getLongitude());
+        //mMap.addMarker(new MarkerOptions().position(pointLocation).title("My location"));
+        //mMap.moveCamera(CameraUpdateFactory.newLatLng(pointLocation));
+        //mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
     }
 }
