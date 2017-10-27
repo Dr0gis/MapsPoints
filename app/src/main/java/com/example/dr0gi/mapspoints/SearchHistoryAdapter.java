@@ -9,17 +9,16 @@ import android.widget.TextView;
 
 import java.util.List;
 
-public class SearchHistoryAdapter extends RecyclerView.Adapter<SearchHistoryAdapter.SearchHistoryHolder> {
-
+class SearchHistoryAdapter extends RecyclerView.Adapter<SearchHistoryAdapter.SearchHistoryHolder> {
     private List<String> historyList;
     private Context context;
     private HistoryItemClickListener listener;
 
-    public interface HistoryItemClickListener {
+    interface HistoryItemClickListener {
         void onHistoryItemClicked(int pos);
     }
 
-    public SearchHistoryAdapter(Context context, List<String> historyList, HistoryItemClickListener listener) {
+    SearchHistoryAdapter(Context context, List<String> historyList, HistoryItemClickListener listener) {
         this.historyList = historyList;
         this.context = context;
         this.listener = listener;
@@ -44,10 +43,9 @@ public class SearchHistoryAdapter extends RecyclerView.Adapter<SearchHistoryAdap
     }
 
     class SearchHistoryHolder extends RecyclerView.ViewHolder {
-
         private TextView historyItem;
 
-        public SearchHistoryHolder(View itemView) {
+        SearchHistoryHolder(View itemView) {
             super(itemView);
             historyItem = (TextView) itemView.findViewById(R.id.history_string);
 
@@ -59,7 +57,7 @@ public class SearchHistoryAdapter extends RecyclerView.Adapter<SearchHistoryAdap
             });
         }
 
-        public void bindData(String str) {
+        void bindData(String str) {
             historyItem.setText(str);
         }
     }

@@ -2,25 +2,28 @@ package com.example.dr0gi.mapspoints;
 
 import com.google.android.gms.maps.model.LatLng;
 
-public class PointInfo {
-    private LatLng coordinats;
+class PointInfo {
+    private String id;
+    private LatLng coordinates;
     private String name;
 
     public PointInfo() {
-        coordinats = new LatLng(0, 0);
+        id = "";
+        coordinates = new LatLng(0, 0);
         name = "";
     }
 
-    public PointInfo(String name, LatLng coordinats) {
+    PointInfo(String id, String name, LatLng coordinates) {
+        this.id = id;
         this.name = name;
-        this.coordinats = coordinats;
+        this.coordinates = coordinates;
     }
 
-    public LatLng getCoordinats() {
-        return coordinats;
+    public LatLng getCoordinates() {
+        return coordinates;
     }
-    public void setCoordinats(LatLng coordinats) {
-        this.coordinats = coordinats;
+    public void setCoordinates(LatLng coordinates) {
+        this.coordinates = coordinates;
     }
 
     public String getName() {
@@ -28,5 +31,12 @@ public class PointInfo {
     }
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
     }
 }
