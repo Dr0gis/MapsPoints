@@ -3,8 +3,11 @@ package com.example.dr0gi.mapspoints;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -36,8 +39,18 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.maps.android.MarkerManager;
+import com.google.maps.android.SphericalUtil;
+import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.clustering.view.ClusterRenderer;
+import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -47,6 +60,8 @@ import java.util.List;
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
     protected static final int MY_PERMISSIONS_REQUEST_LOCATION = 1047;
+    private static final int RADIUS_SEARCH = 1000;
+
 
     private GoogleMap mMap;
     private EditText searchInput;
@@ -58,6 +73,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private LocationManager locationManager;
     private MyLocationSource locationSource;
+    private ClusterManager<MarkerItem> clusterManager;
 
     private interface FirstDetectLocationListener {
         void zoomCamera(Location location);
@@ -116,7 +132,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void connectToApiFoursquaer(String strInput, Location location, FoursquareApiExecutorManager.OnFoursquareApiCompleted<List<PointInfo>> listener) {
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         FoursquareApiExecutorManager foursquareApiExecutorManager = new FoursquareApiExecutorManager();
-        foursquareApiExecutorManager.getSearchForVenues(latLng, "checkin", 1000, strInput, 15, listener);
+        foursquareApiExecutorManager.getSearchForVenues(latLng, "checkin", RADIUS_SEARCH, strInput, 15, listener);
     }
     private void searchPoints(final String strInput, Location location) {
         connectToApiFoursquaer(strInput, location, new FoursquareApiExecutorManager.OnFoursquareApiCompleted<List<PointInfo>>() {
@@ -126,9 +142,47 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @Override
                     public void run() {
                         mMap.clear();
+                        LatLng latLng = new LatLng(locationManager.getCurrentLocation().getLatitude(), locationManager.getCurrentLocation().getLongitude());
+
+                        mMap.addPolygon(new PolygonOptions()
+                                .add(
+                                        SphericalUtil.computeOffset(latLng, RADIUS_SEARCH * Math.sqrt(2), 45),
+                                        SphericalUtil.computeOffset(latLng, RADIUS_SEARCH * Math.sqrt(2), -45),
+                                        SphericalUtil.computeOffset(latLng, RADIUS_SEARCH * Math.sqrt(2), -135),
+                                        SphericalUtil.computeOffset(latLng, RADIUS_SEARCH * Math.sqrt(2), 135),
+                                        SphericalUtil.computeOffset(latLng, RADIUS_SEARCH * Math.sqrt(2), 45)
+                                )
+                                .strokeWidth(5)
+                                .strokeColor(Color.RED)
+                                .fillColor(Color.argb(64, 255, 0, 0))
+                        );
+
+                        mMap.addCircle(new CircleOptions()
+                            .center(latLng)
+                            .radius(RADIUS_SEARCH)
+                            .strokeWidth(5)
+                            .strokeColor(Color.BLUE)
+                            .fillColor(Color.argb(64, 0, 0, 255))
+                        );
+
+
+                        clusterManager.clearItems();
                         for (PointInfo point : result) {
-                            mMap.addMarker(new MarkerOptions().position(point.getCoordinates()).title(point.getName()));
+                            /*mMap.addMarker(
+                                new MarkerOptions()
+                                .position(point.getCoordinates())
+                                .title(point.getName())
+                                .icon(BitmapDescriptorFactory.fromBitmap(point.getCategory().getIcon()))
+                            );*/
+                            clusterManager.addItem(
+                                new MarkerItem(
+                                    point.getCoordinates(),
+                                    point.getName(),
+                                    BitmapDescriptorFactory.fromBitmap(point.getCategory().getIcon())
+                                )
+                            );
                         }
+                        clusterManager.cluster();
                     }
                 });
             }
@@ -193,6 +247,26 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         setLocationOnMap();
+        clusterManager = new ClusterManager<>(MapsActivity.this, mMap);
+        clusterManager.setRenderer(new MyClusterRender(MapsActivity.this, mMap, clusterManager));
+        mMap.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
+            @Override
+            public void onCameraMove() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        float curZoom = mMap.getCameraPosition().zoom;
+                        if (curZoom < 20) {
+                            clusterManager.cluster();
+                        }
+                        else {
+                            clusterManager.clearItems();
+                            clusterManager.cluster();
+                        }
+                    }
+                });
+            }
+        });
     }
     private void setLocationOnMap() {
         Boolean permissionFineLocation = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED;
@@ -452,6 +526,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 listener.onLocationChanged(location);
             }
             detectLocationListener.zoomCamera(location);
+
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         }
     }
     private class MyLocationSource implements LocationSource {
@@ -469,6 +545,60 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         public void deactivate() {
             mListener = null;
+        }
+    }
+
+    public class MarkerItem implements ClusterItem  {
+        private LatLng latLng;
+        private String title;
+        private BitmapDescriptor icon;
+        //private MarkerOptions marker;
+
+        public MarkerItem(LatLng latLng, String title, BitmapDescriptor icon) {
+            this.latLng = latLng;
+            this.title = title;
+            this.icon = icon;
+        }
+
+        @Override
+        public LatLng getPosition() {
+            return latLng;
+        }
+
+        @Override
+        public String getTitle() {
+            return title;
+        }
+
+        @Override
+        public String getSnippet() {
+            return null;
+        }
+
+        public BitmapDescriptor getIcon() {
+            return icon;
+        }
+
+        /*public MarkerOptions getMarker() {
+            return marker;
+        }
+
+        public void setMarker(MarkerOptions marker) {
+            this.marker = marker;
+        }*/
+    }
+
+    public class MyClusterRender extends DefaultClusterRenderer<MarkerItem> {
+
+        public MyClusterRender(Context context, GoogleMap map, ClusterManager clusterManager) {
+            super(context, map, clusterManager);
+        }
+
+
+        @Override
+        protected void onBeforeClusterItemRendered(MarkerItem item, MarkerOptions markerOptions) {
+            super.onBeforeClusterItemRendered(item, markerOptions);
+            markerOptions.icon(item.getIcon());
         }
     }
 }

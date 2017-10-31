@@ -1,22 +1,22 @@
 package com.example.dr0gi.mapspoints;
 
+import android.graphics.Bitmap;
+
 import com.google.android.gms.maps.model.LatLng;
+
+import java.util.List;
 
 class PointInfo {
     private String id;
     private LatLng coordinates;
     private String name;
+    private PointCategory category;
 
-    public PointInfo() {
-        id = "";
-        coordinates = new LatLng(0, 0);
-        name = "";
-    }
-
-    PointInfo(String id, String name, LatLng coordinates) {
+    public PointInfo(String id, LatLng coordinates, String name, PointCategory category) {
         this.id = id;
-        this.name = name;
         this.coordinates = coordinates;
+        this.name = name;
+        this.category = category;
     }
 
     public LatLng getCoordinates() {
@@ -38,5 +38,12 @@ class PointInfo {
     }
     public void setId(String id) {
         this.id = id;
+    }
+
+    public PointCategory getCategory() {
+        return category;
+    }
+    public void setCategory(PointCategory category) {
+        this.category = category;
     }
 }
